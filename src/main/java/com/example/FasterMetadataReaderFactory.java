@@ -17,13 +17,10 @@
 package com.example;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,7 +34,20 @@ public class FasterMetadataReaderFactory extends ConcurrentReferenceCachingMetad
 
 	private static Log logger = LogFactory.getLog(FasterMetadataReaderFactory.class);
 
-	private Kryo kryo = new Kryo();
+	private ObjectMapper mapper = new ObjectMapper();
+
+	{
+		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+				.withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withIsGetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+		mapper.setVisibility(mapper.getDeserializationConfig().getDefaultVisibilityChecker()
+				.withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withIsGetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+				.withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+	}
 
 	public FasterMetadataReaderFactory() {
 		super();
@@ -60,27 +70,25 @@ public class FasterMetadataReaderFactory extends ConcurrentReferenceCachingMetad
 	}
 
 	private MetadataReader serializableReader(ClassPathResource resource) {
-		File file = new File("cache", resource.getPath());
+		File file = new File("cache", resource.getPath().replace(".class", ".json"));
 		if (file.exists()) {
-			try (Input stream = new Input(new FileInputStream(file))) {
+			try {
 				logger.info("Reading metadata for: " + resource);
-				MetadataReader reader = (MetadataReader) kryo.readClassAndObject(stream);
+				MetadataReader reader = (MetadataReader) mapper.readValue(file, CopyMetadataReader.class);
 				logger.info("Annotations: " + reader.getAnnotationMetadata());
 				return reader;
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				throw new IllegalStateException("Could not deserialize", e);
 			}
 		}
 		file.getParentFile().mkdirs();
-		try (Output stream = new Output(new FileOutputStream(file))) {
+		try {
 			MetadataReader reader = super.createMetadataReader(resource);
 			reader = new CopyMetadataReader((ClassPathResource) reader.getResource(), reader.getAnnotationMetadata());
 			logger.info("Writing metadata for: " + resource);
-			kryo.writeClassAndObject(stream, reader);
+			mapper.writeValue(file, reader);
 			return reader;
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			throw new IllegalStateException("Could not serialize", e);
 		}
 	}

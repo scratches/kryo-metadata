@@ -10,14 +10,6 @@
     "allDeclaredMethods": true
   },
   {
-    "name": "com.esotericsoftware.kryo.serializers.FieldSerializer",
-    "allDeclaredConstructors": true
-  },
-  {
-    "name": "com.esotericsoftware.kryo.serializers.CollectionSerializer",
-    "allDeclaredConstructors": true
-  },
-  {
     "name": "com.example.CopyMetadataReader",
     "allDeclaredFields": true,
     "allDeclaredConstructors": true,

@@ -20,9 +20,13 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotation.Adapt;
@@ -71,7 +75,7 @@ public class CopyMetadataReader implements MetadataReader {
 		return metadata;
 	}
 
-	static class CopyAnnotationMetadata implements ClassMetadata, AnnotationMetadata {
+	static class CopyAnnotationMetadata implements AnnotationMetadata {
 
 		private String className;
 
@@ -99,7 +103,7 @@ public class CopyMetadataReader implements MetadataReader {
 
 		private boolean interfaceness;
 
-		private Set<MethodMetadata> methodMetadataSet;
+		private Set<CopyMethodMetadata> methodMetadataSet;
 
 		private Collection<MergedAnnotationSource> annotations;
 
@@ -293,6 +297,7 @@ public class CopyMetadataReader implements MetadataReader {
 
 		private Class<? extends Annotation> type;
 
+		@JsonTypeInfo(use = Id.CLASS)
 		private Map<String, Object> attributes;
 
 		public MergedAnnotationSource() {
